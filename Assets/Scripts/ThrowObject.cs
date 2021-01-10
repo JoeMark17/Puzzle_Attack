@@ -31,7 +31,7 @@ public class ThrowObject : MonoBehaviour
     {
         float dist = Vector3.Distance(gameObject.transform.position, player.position);
 
-        if (dist <= 2.5f)
+        if (dist <= 4f)
         {
             hasPlayer = true;
         }
@@ -42,14 +42,14 @@ public class ThrowObject : MonoBehaviour
         if (hasPlayer && beingCarried == false && inputManager.PlayerGrabedThisFrame())
         {
             
-            transform.parent = playerCam.transform; //playerCam; //used to be playerCam
+            transform.parent = playerCam.transform;
             transform.localPosition = puloc;
 
             GetComponent<Rigidbody>().isKinematic = true;
             Transform puzzleObject =  GetComponent<Rigidbody>().transform;
 
             puzzleObject.position = playerCam.position + new Vector3 (0.98f,-0.28f,3.25f);
-            puzzleObject.localPosition = puloc + new Vector3 (0f, 0f, 4f); //playerCam.rotation;// + Quaternion.identity;
+            puzzleObject.localPosition = puloc + new Vector3 (0f, 0f, 4f);
 
             beingCarried = true;
         }
