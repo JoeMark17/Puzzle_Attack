@@ -9,6 +9,7 @@ public class ThrowObject : MonoBehaviour
     public Transform vcam;
     public float throwForce = 10;
     bool hasPlayer = false;
+    float limitObjects = 1f;
     bool beingCarried = false;
     public AudioClip[] soundToPlay;
     //private AudioSource audio;
@@ -30,6 +31,7 @@ public class ThrowObject : MonoBehaviour
     void Update()
     {
         float dist = Vector3.Distance(gameObject.transform.position, player.position);
+        Debug.Log(limitObjects);
 
         if (dist <= 4f)
         {
@@ -39,20 +41,30 @@ public class ThrowObject : MonoBehaviour
         {
             hasPlayer = false;
         }
-        if (hasPlayer && beingCarried == false && inputManager.PlayerGrabedThisFrame())
+
+                   
+        if (hasPlayer == true && beingCarried == false && inputManager.PlayerGrabedThisFrame())
         {
+            if (limitObjects == 1f)
+            {
+                transform.parent = playerCam.transform;
+                transform.localPosition = puloc;
+
+                GetComponent<Rigidbody>().isKinematic = true;
+                Transform puzzleObject =  GetComponent<Rigidbody>().transform;
+
+                // puzzleObject.position = playerCam.position + new Vector3 (0.98f,-0.28f,3.25f);
+                puzzleObject.localPosition = puloc + new Vector3 (0f, 0f, 4f);
+
+                beingCarried = true;
+                Debug.Log("Looping");
+                
+            }
+            limitObjects++;                
+            Debug.Log(limitObjects);
             
-            transform.parent = playerCam.transform;
-            transform.localPosition = puloc;
-
-            GetComponent<Rigidbody>().isKinematic = true;
-            Transform puzzleObject =  GetComponent<Rigidbody>().transform;
-
-            puzzleObject.position = playerCam.position + new Vector3 (0.98f,-0.28f,3.25f);
-            puzzleObject.localPosition = puloc + new Vector3 (0f, 0f, 4f);
-
-            beingCarried = true;
         }
+    
         if (beingCarried)
         {
             if (touched)
@@ -68,6 +80,9 @@ public class ThrowObject : MonoBehaviour
                     transform.parent = null;
                     beingCarried = false;
                     GetComponent<Rigidbody>().AddForce(playerCam.forward * throwForce);
+
+                    limitObjects--;
+                    Debug.Log(limitObjects);
                     //RandomAudio();
                 }
                 // else if (Input.GetMouseButtonDown(1))
