@@ -9,6 +9,7 @@ public class ThrowObject : MonoBehaviour
     public Transform vcam;
     public float throwForce = 10;
     bool hasPlayer = false;
+    bool hasEnemy = false;
     float limitObjects = 1f;
     bool beingCarried = false;
     public AudioClip[] soundToPlay;
@@ -31,7 +32,7 @@ public class ThrowObject : MonoBehaviour
     void Update()
     {
         float dist = Vector3.Distance(gameObject.transform.position, player.position);
-        Debug.Log(limitObjects);
+        //Debug.Log(limitObjects);
 
         if (dist <= 4f)
         {
@@ -41,6 +42,7 @@ public class ThrowObject : MonoBehaviour
         {
             hasPlayer = false;
         }
+
 
                    
         if (hasPlayer == true && beingCarried == false && inputManager.PlayerGrabedThisFrame())
@@ -109,4 +111,16 @@ public class ThrowObject : MonoBehaviour
             touched = true;
         }
     }
+
+    void EnemyKeyGrab() //Use this to have the key be a child to the enemy.
+    {
+        transform.parent = playerCam.transform;
+        transform.localPosition = puloc;
+
+        GetComponent<Rigidbody>().isKinematic = true;
+        Transform puzzleObject =  GetComponent<Rigidbody>().transform;
+
+        // puzzleObject.position = playerCam.position + new Vector3 (0.98f,-0.28f,3.25f);
+        puzzleObject.localPosition = puloc + new Vector3 (0f, 0f, 4f);
     }
+}
