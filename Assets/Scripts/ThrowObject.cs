@@ -9,12 +9,12 @@ public class ThrowObject : MonoBehaviour
     public Transform vcam;
     public float throwForce = 10;
     bool hasPlayer = false;
-    bool hasEnemy = false;
     float limitObjects = 1f;
-    bool beingCarried = false;
+    public bool beingCarried = false;
     public AudioClip[] soundToPlay;
     //private AudioSource audio;
     public int dmg;
+    public bool catchBool = false;
     private bool touched = false;
     private InputManager inputManager;
 
@@ -22,17 +22,12 @@ public class ThrowObject : MonoBehaviour
     {
         inputManager = InputManager.Instance;
     }
-    
 
-    // void Start()
-    // {
-    //     audio = GetComponent<AudioSource>();
-    // }
-
-    void Update()
+    public void Update()
     {
         float dist = Vector3.Distance(gameObject.transform.position, player.position);
-        //Debug.Log(limitObjects);
+        int keyCount = playerCam.transform.childCount;
+        Debug.Log(keyCount);
 
         if (dist <= 4f)
         {
@@ -42,29 +37,10 @@ public class ThrowObject : MonoBehaviour
         {
             hasPlayer = false;
         }
-
-
-                   
-        if (hasPlayer == true && beingCarried == false && inputManager.PlayerGrabedThisFrame())
+              
+        if (hasPlayer == true && beingCarried == false && keyCount == 0 && inputManager.PlayerGrabedThisFrame())
         {
-            if (limitObjects == 1f)
-            {
-                transform.parent = playerCam.transform;
-                transform.localPosition = puloc;
-
-                GetComponent<Rigidbody>().isKinematic = true;
-                Transform puzzleObject =  GetComponent<Rigidbody>().transform;
-
-                // puzzleObject.position = playerCam.position + new Vector3 (0.98f,-0.28f,3.25f);
-                puzzleObject.localPosition = puloc + new Vector3 (0f, 0f, 4f);
-
-                beingCarried = true;
-                Debug.Log("Looping");
-                
-            }
-            limitObjects++;                
-            Debug.Log(limitObjects);
-            
+            PickUpKey();
         }
     
         if (beingCarried)
@@ -78,49 +54,71 @@ public class ThrowObject : MonoBehaviour
             }
             if (inputManager.PlayerThrewThisFrame())
                 {
-                    GetComponent<Rigidbody>().isKinematic = false;
-                    transform.parent = null;
-                    beingCarried = false;
-                    GetComponent<Rigidbody>().AddForce(playerCam.forward * throwForce);
-
-                    limitObjects--;
-                    Debug.Log(limitObjects);
-                    //RandomAudio();
+                    ThrowKey();
                 }
-                // else if (Input.GetMouseButtonDown(1))
-                // {
-                //     GetComponent<Rigidbody>().isKinematic = false;
-                //     transform.parent = null;
-                //     beingCarried = false;
-                // }
             }
         }
-    // void RandomAudio()
-    // {
-    //     if (audio.isPlaying){
-    //         return;
-    //             }
-    //     audio.clip = soundToPlay[Random.Range(0, soundToPlay.Length)];
-    //     audio.Play();
 
-    // }
-   void OnTriggerEnter()
+   public void OnTriggerEnter(Collider collision)
     {
         if (beingCarried)
         {
             touched = true;
         }
+
+        FindObjectOfType<EnemyAI>();
+        collision.gameObject.GetComponent<EnemyAI>().TakeDmg(dmg);
     }
 
-    void EnemyKeyGrab() //Use this to have the key be a child to the enemy.
+
+    public void ThrowKey()
+    {
+        GetComponent<Rigidbody>().isKinematic = false;
+        transform.parent = null;
+        beingCarried = false;
+        GetComponent<Rigidbody>().AddForce(playerCam.forward * throwForce);
+
+        catchBool = true;
+        Debug.Log("Thrown");
+        Invoke("dontCatch", 2f);
+    }
+
+    public void PickUpKey ()
     {
         transform.parent = playerCam.transform;
         transform.localPosition = puloc;
 
         GetComponent<Rigidbody>().isKinematic = true;
-        Transform puzzleObject =  GetComponent<Rigidbody>().transform;
-
-        // puzzleObject.position = playerCam.position + new Vector3 (0.98f,-0.28f,3.25f);
+        Transform puzzleObject = GetComponent<Rigidbody>().transform;
         puzzleObject.localPosition = puloc + new Vector3 (0f, 0f, 4f);
+
+        beingCarried = true;
     }
+
+    public void EnemyPickUp (Transform enemy)
+    {
+        transform.parent = enemy.transform;
+        transform.localPosition = puloc;
+
+        GetComponent<Rigidbody>().isKinematic = true;
+        Transform puzzleObject =  GetComponent<Rigidbody>().transform;
+        puzzleObject.localPosition = puloc + new Vector3 (0f, 0f, 1.5f);
+        
+        beingCarried = true;
+    }
+
+    public void EnemyThrowKey(Transform enemy)
+    {
+        GetComponent<Rigidbody>().isKinematic = false;
+        transform.parent = null;
+        GetComponent<Rigidbody>().AddForce(enemy.forward * throwForce);
+        beingCarried = false;
+    }
+
+    public void dontCatch()
+    {
+        Debug.Log("Ready for pickup");
+        catchBool = false;
+    }
+
 }

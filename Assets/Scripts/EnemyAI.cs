@@ -5,8 +5,10 @@ using UnityEngine.AI;
 
 public class EnemyAI : MonoBehaviour
 {
+    public float enemyHealth = 100f;
     public NavMeshAgent agent;
     private Vector3 puloc;
+    GameObject holdingKey;
 
     public Transform player;
     public Transform enemy;
@@ -17,11 +19,12 @@ public class EnemyAI : MonoBehaviour
     public Vector3 walkPoint;
     bool walkPointSet;
     public float walkPointRange;
+    public float throwForce;
 
     //Attacking
     public float timeBetweenAttacks;
     public bool alreadyAttacked;
-
+    public bool isCarried;
     //States
     public float sightRange, attackRange, keyRange;
     public bool playerInSightRange, playerInAttackRange, playerInKeyRange;
@@ -35,23 +38,28 @@ public class EnemyAI : MonoBehaviour
 
     private void Update() 
     {
+
+        if(enemyHealth <= 0f)
+        {
+            Destroy(enemy);
+        }
         //Check for sight and attack range.
         playerInSightRange = Physics.CheckSphere(transform.position, sightRange, whatIsPlayer);
         playerInAttackRange = Physics.CheckSphere(transform.position, attackRange, whatIsPlayer);
 
-        //If game object = piece and that transfrom is greater than 1f (so it is not bouncing off piece on the ground - then bounce back)
-        // if (keyInBounceRange && key.transform.position.y > -18.29f ) 
-        // {
-        //     enemy.AddForce (-transform.forward * 1000f * Time.deltaTime);
-        // }
+        int keyCount = enemy.transform.childCount;
 
-        FindClosestKey();
+        if (keyCount == 0)
+        {
+            FindClosestKey();
+        }
 
-        // if (!playerInSightRange && !playerInAttackRange) Patrolling();
-        // if (playerInSightRange && !playerInAttackRange) ChasePlayer();
-        // if (playerInAttackRange && playerInSightRange) AttackPlayer();
-
-        
+        else
+        {
+            if (!playerInSightRange && !playerInAttackRange) Patrolling();
+            if (playerInSightRange && !playerInAttackRange) ChasePlayer();
+            if (playerInAttackRange && playerInSightRange) AttackPlayer();
+        }        
     }
     
     private void Patrolling()
@@ -99,10 +107,12 @@ public class EnemyAI : MonoBehaviour
         if (!alreadyAttacked)
         {
             ////Attack code here
-            //Will be melee attack
+            Debug.Log("Threw the key");
+
+            holdingKey.GetComponent<ThrowObject>().EnemyThrowKey(enemy);
 
             alreadyAttacked = true;
-            Invoke(nameof(ResetAttack), timeBetweenAttacks);
+            Invoke(nameof(ResetAttack), timeBetweenAttacks);   
         }
     }
 
@@ -111,7 +121,7 @@ public class EnemyAI : MonoBehaviour
         alreadyAttacked = false;
     }
 
-    private void FindClosestKey()
+    public void FindClosestKey()
     {
         float distanceToClosestKey = Mathf.Infinity;
         GameObject closestKey = null;
@@ -120,7 +130,12 @@ public class EnemyAI : MonoBehaviour
         foreach (GameObject currentKey in allKeys)
         {
             float distanceToKey = (currentKey.transform.position - this.transform.position).sqrMagnitude;
-            if (distanceToKey < distanceToClosestKey)
+
+            //bool isThrown = FindObjectOfType<ThrowObject>().catchBool;
+            //ThrowObject keyScript = currentKey.GetComponent<ThrowObject>();
+            //isCarried = keyScript.beingCarried;
+
+            if (distanceToKey < distanceToClosestKey && isThrown == false)
             {
                 distanceToClosestKey = distanceToKey;
                 closestKey = currentKey;
@@ -129,19 +144,21 @@ public class EnemyAI : MonoBehaviour
         Debug.DrawLine (this.transform.position, closestKey.transform.position);
         agent.SetDestination(closestKey.transform.position);
 
-        //float pickupKeyDistance = Vector3.Distance (player.position, closestKey.transform.position);
-        //Debug.Log(pickupKeyDistance);
-
         playerInKeyRange = Physics.CheckSphere(transform.position, keyRange, whatIsKey);
 
         if (playerInKeyRange)
         {
-            Debug.Log("Pick Up Key!");
+            //GameObject pickUpKey = GameObject.Find(closestKey);
+            closestKey.GetComponent<ThrowObject>().EnemyPickUp(enemy);
 
-            ////This will call the function in the throw object script so the key wil be a child of the enemy.
-            //EnemyKeyGrab();
+            holdingKey = closestKey;
 
             hasKey = true;
         }
+    }
+
+    public void TakeDmg (float dmg)
+    {
+        enemyHealth =- dmg;
     }
 }
